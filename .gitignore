@@ -10,6 +10,8 @@
 /autom4te.cache/
 /build/Makefile
 /build/Makefile.in
+/cmake/Makefile
+/cmake/Makefile.in
 /compile
 /config.guess
 /config.h
