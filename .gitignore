@@ -49,6 +49,7 @@
 /src/Makefile
 /src/Makefile.in
 /src/cpp_test
+/src/cpp_test_exceptions
 /src/liblo.def
 /src/subtest
 /src/test_bidirectional_tcp
@@ -57,6 +58,7 @@
 /src/tools/Makefile.in
 /src/tools/oscdump
 /src/tools/oscsend
+/src/tools/oscsendfile
 /stamp-h1
 /test
 /test-driver
