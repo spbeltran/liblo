@@ -1536,9 +1536,24 @@ int lo_servers_wait(lo_server *s, int *status, int num_servers, int timeout)
     lo_timetag_now(&then);
     res = select(nfds + 1, &ps, NULL, NULL, &stimeout);
 
-    if (res == SOCKET_ERROR)
+    if (res == SOCKET_ERROR) {
+        // Error code 10038 means: WSAENOTSOCK - An operation was attempted on something that is not a socket.
+        // This error may mean that liblo has not detected that a TCP communication has been closed.
+        // So, close all client sockets openned, and continue.
+        if (WSAGetLastError() == 10038) {
+            int err;
+            int len = sizeof(err);
+            for (j = 0; j < num_servers; j++) {
+                for (i = 1; i < s[j]->sockets_len; i++) {
+                    if (getsockopt(s[j]->sockets[i].fd, SOL_SOCKET, SO_ERROR, &err, &len) == SOCKET_ERROR) {
+                        closesocket(s[j]->sockets[i].fd);
+                        lo_server_del_socket(s[j], i, s[j]->sockets[i].fd);
+                    }
+                }
+            }
+        }
         return 0;
-    else if (res) {
+    } else if (res) {
         for (j = 0; j < num_servers; j++) {
             if (FD_ISSET(s[j]->sockets[0].fd, &ps)) {
                 // If select() was reporting a new connection on the listening
