@@ -603,7 +603,7 @@ lo_server lo_server_new_with_proto_internal(const char *group,
 
         for (it = ai; it && s->sockets[0].fd == -1; it = it->ai_next) {
             used = it;
-            s->sockets[0].fd = socket(it->ai_family, hints.ai_socktype, 0);
+            s->sockets[0].fd = (int)socket(it->ai_family, hints.ai_socktype, 0);
 
             if (s->sockets[0].fd != -1
                 && it->ai_family == AF_INET
@@ -677,7 +677,7 @@ lo_server lo_server_new_with_proto_internal(const char *group,
         }}
 
         if ((used != NULL) &&
-            (bind(s->sockets[0].fd, used->ai_addr, used->ai_addrlen) <
+            (bind(s->sockets[0].fd, used->ai_addr, (int)used->ai_addrlen) <
              0)) {
             err = geterror();
 #ifdef WIN32
@@ -1213,7 +1213,7 @@ int lo_server_recv_raw_stream_socket(lo_server s, int isock,
             // We have a whole message in the buffer.
             size_t bytes_written = buffer_after - sc->buffer - sc->buffer_read_offset;
 
-            sc->buffer_read_offset += bytes_written;
+            sc->buffer_read_offset += (unsigned int)bytes_written;
 
             msg_len = sc->buffer_read_offset - sc->buffer_msg_offset - sizeof(uint32_t);
 
@@ -1231,7 +1231,7 @@ int lo_server_recv_raw_stream_socket(lo_server s, int isock,
             }
 
             // Update how much memory still needs decoding.
-            bytes_recv -= bytes_read;
+            bytes_recv -= (int)bytes_read;
             stack_buffer += bytes_read;
 
             // We could exceed buffer due to prepending the count
@@ -1247,7 +1247,7 @@ int lo_server_recv_raw_stream_socket(lo_server s, int isock,
         // Any data left over is left in the buffer, so update the
         // read offset to indicate the end of it.
         bytes_written = buffer_after - sc->buffer - sc->buffer_read_offset;
-        sc->buffer_read_offset += bytes_written;
+        sc->buffer_read_offset += (unsigned int)bytes_written;
     }
     else
     {
@@ -1355,7 +1355,7 @@ void *lo_server_recv_raw_stream(lo_server s, size_t * size, int *psock)
 
             /* zeroeth socket is listening for new connections */
             if (sock == s->sockets[0].fd) {
-                sock = accept(sock, (struct sockaddr *) &addr, &addr_len);
+                sock = (int)accept(sock, (struct sockaddr *) &addr, &addr_len);
 
                 i = lo_server_add_socket(s, sock, 0, &addr, addr_len);
 
@@ -1393,7 +1393,7 @@ int lo_server_wait(lo_server s, int timeout)
 
 int lo_servers_wait(lo_server *s, int *status, int num_servers, int timeout)
 {
-    int i, j, k, sched_timeout;
+    int i, j, sched_timeout;
 
     if (!status)
         status = alloca(sizeof(int) * num_servers);
@@ -1511,7 +1511,7 @@ int lo_servers_wait(lo_server *s, int *status, int num_servers, int timeout)
 
     sched_timeout = timeout;
     for (j = 0; j < num_servers; j++) {
-        int server_timeout = lo_server_next_event_delay(s[j]) * 1000;
+        int server_timeout = (int)(lo_server_next_event_delay(s[j]) * 1000);
         if (server_timeout < sched_timeout)
             sched_timeout = server_timeout;
     }
@@ -1541,7 +1541,7 @@ int lo_servers_wait(lo_server *s, int *status, int num_servers, int timeout)
         // This error may mean that liblo has not detected that a TCP communication has been closed.
         // So, close all client sockets openned, and continue.
         if (WSAGetLastError() == 10038) {
-            int err;
+            char err;
             int len = sizeof(err);
             for (j = 0; j < num_servers; j++) {
                 for (i = 1; i < s[j]->sockets_len; i++) {
@@ -1559,7 +1559,7 @@ int lo_servers_wait(lo_server *s, int *status, int num_servers, int timeout)
                 // If select() was reporting a new connection on the listening
                 // socket rather than a ready message, accept it and check again.
                 if (s[j]->protocol == LO_TCP) {
-                    int sock = accept(s[j]->sockets[0].fd,
+                    int sock = (int)accept(s[j]->sockets[0].fd,
                                       (struct sockaddr *) &addr, &addr_len);
                     double diff;
                     struct timeval tvdiff;
@@ -1573,7 +1573,7 @@ int lo_servers_wait(lo_server *s, int *status, int num_servers, int timeout)
                     // Subtract time waited from total timeout
                     diff = lo_timetag_diff(now, then);
                     tvdiff.tv_sec = stimeout.tv_sec - (int)diff;
-                    tvdiff.tv_usec = stimeout.tv_usec - (diff * 1000000
+                    tvdiff.tv_usec = stimeout.tv_usec - (long)(diff * 1000000
                                                          - (int)diff * 1000000);
 
                     // Handle underflow
@@ -1719,8 +1719,8 @@ int lo_server_recv(lo_server s)
             }
         }
 
-        stimeout.tv_sec = sched_time;
-        stimeout.tv_usec = (sched_time - stimeout.tv_sec) * 1.e6;
+        stimeout.tv_sec = (long)sched_time;
+        stimeout.tv_usec = (long)((sched_time - stimeout.tv_sec) * 1.e6);
         res = select(nfds + 1, &ps, NULL, NULL, &stimeout);
         if (res == SOCKET_ERROR) {
             return 0;
@@ -2016,7 +2016,7 @@ static void dispatch_method(lo_server s, const char *path,
 
                     argv = (lo_arg **) calloc(argc, sizeof(lo_arg *));
                     for (i = 0; i < argc; i++) {
-                        opsize += lo_arg_size((lo_type)it->typespec[i], ptr);
+                        opsize += (int)lo_arg_size((lo_type)it->typespec[i], ptr);
                         ptr += lo_arg_size((lo_type)types[i], ptr);
                     }
 

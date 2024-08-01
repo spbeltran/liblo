@@ -305,7 +305,7 @@ static int create_socket(lo_address a)
 {
     switch(a->protocol) {
     case LO_UDP:
-        a->socket = socket(a->ai->ai_family, a->ai->ai_socktype, 0);
+        a->socket = (int)socket(a->ai->ai_family, a->ai->ai_socktype, 0);
         if (a->socket == -1) {
             a->errnum = geterror();
             a->errstr = NULL;
@@ -323,10 +323,10 @@ static int create_socket(lo_address a)
         struct addrinfo *ai = a->ai;
         int sfd = -1;
         for(ai=a->ai; ai != NULL; ai = ai->ai_next) {
-            sfd = socket(ai->ai_family, ai->ai_socktype, 0);
+            sfd = (int)socket(ai->ai_family, ai->ai_socktype, 0);
             if (-1 == sfd)
                 continue;
-            if(-1 != connect(sfd, ai->ai_addr, ai->ai_addrlen))
+            if(-1 != connect(sfd, ai->ai_addr, (int)ai->ai_addrlen))
                 break;
             closesocket(sfd);
         }
@@ -480,7 +480,7 @@ static int send_data(lo_address a, lo_server from, char *data,
 
     if (a->protocol == LO_TCP && !(a->flags & LO_SLIP)) {
         // For TCP only, send the length of the following data
-        int32_t size = htonl(data_len);
+        int32_t size = htonl((unsigned long)data_len);
         ret = send(sock, (const void*)&size, sizeof(size), MSG_NOSIGNAL);
     }
     // Send the data
@@ -506,8 +506,8 @@ static int send_data(lo_address a, lo_server from, char *data,
             ai = a->ai;
 
             do {
-                ret = sendto(sock, data, data_len, MSG_NOSIGNAL,
-                             ai->ai_addr, ai->ai_addrlen);
+                ret = sendto(sock, data, (int)data_len, MSG_NOSIGNAL,
+                             ai->ai_addr, (int)ai->ai_addrlen);
                 ai = ai->ai_next;
             } while (ret == -1 && ai != NULL);
             if (ret == -1 && ai != NULL && a->ai!=ai)
@@ -529,7 +529,7 @@ static int send_data(lo_address a, lo_server from, char *data,
                 data = (char*)slip_encode((unsigned char*)data, &len,
                                           a->flags & LO_SLIP_DBL_END);
 
-            ret = send(sock, data, len, MSG_NOSIGNAL);
+            ret = send(sock, data, (int)len, MSG_NOSIGNAL);
 
             if (a->flags & LO_SLIP)
                 free(data);

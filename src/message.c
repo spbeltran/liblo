@@ -1008,7 +1008,7 @@ void lo_message_pp(lo_message m)
     if (d != end) {
         fprintf(stderr,
                 "liblo warning: type and data do not match (off by %ld) in message %p\n",
-                labs((char*) d - (char*) end), m);
+                labs((long)((char*) d - (char*) end)), m);
     }
 }
 
@@ -1186,7 +1186,7 @@ lo_hires lo_hires_val(lo_type type, lo_arg * p)
     case LO_INT32:
         return p->i;
     case LO_INT64:
-        return p->h;
+        return (lo_hires)p->h;
     case LO_FLOAT:
         return p->f;
     case LO_DOUBLE:

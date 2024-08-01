@@ -685,7 +685,7 @@ int lo_inaddr_find_iface(lo_inaddr t, int fam,
                 found = 1;
             else {
 				WCHAR ifaceW[256];
-				MultiByteToWideChar(CP_ACP, 0, iface, strlen(iface),
+				MultiByteToWideChar(CP_ACP, 0, iface, (int)strlen(iface),
 									ifaceW, 256);
 				if (lstrcmpW(ifaceW, aa->FriendlyName)==0)
 					found = 1;

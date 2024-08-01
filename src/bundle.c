@@ -291,7 +291,7 @@ void *lo_bundle_serialise(lo_bundle b, void *to, size_t * size)
 	}
 
 	bes = (int32_t *) (void *)pos;
-	*bes = lo_htoo32(skip);
+	*bes = lo_htoo32((unsigned long)skip);
 	pos += skip + 4;
 
 	if (pos > (char*) to + s) {
