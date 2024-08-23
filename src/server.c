@@ -1413,7 +1413,7 @@ int lo_servers_wait(lo_server *s, int *status, int num_servers, int timeout)
 #ifdef HAVE_POLL
     socklen_t addr_len = sizeof(struct sockaddr_storage);
     struct sockaddr_storage *addr = alloca (addr_len * num_servers);
-    int num_sockets;
+    int k, num_sockets;
 
   again:
     num_sockets = 0;
