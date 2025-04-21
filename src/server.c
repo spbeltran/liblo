@@ -1163,6 +1163,7 @@ int lo_server_recv_raw_stream_socket(lo_server s, int isock,
 
         // Error, or socket was closed.
         // Either way, we remove it from the server.
+        // TODO: Create a callback to indicate that a client has disconnected.
         closesocket(s->sockets[isock].fd);
         lo_server_del_socket(s, isock, s->sockets[isock].fd);
         return 0;
@@ -1540,7 +1541,7 @@ int lo_servers_wait(lo_server *s, int *status, int num_servers, int timeout)
         // Error code 10038 means: WSAENOTSOCK - An operation was attempted on something that is not a socket.
         // This error may mean that liblo has not detected that a TCP communication has been closed.
         // So, close all client sockets openned, and continue.
-        if (WSAGetLastError() == 10038) {
+        if (WSAGetLastError() == WSAENOTSOCK) {
             char err;
             int len = sizeof(err);
             for (j = 0; j < num_servers; j++) {
@@ -1563,7 +1564,7 @@ int lo_servers_wait(lo_server *s, int *status, int num_servers, int timeout)
                                       (struct sockaddr *) &addr, &addr_len);
                     double diff;
                     struct timeval tvdiff;
-
+                    // TODO: Create a callback to indicate that a new client has connected.
                     i = lo_server_add_socket(s[j], sock, 0, &addr, addr_len);
                     if (i < 0)
                         closesocket(sock);
