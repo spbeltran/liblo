@@ -806,6 +806,7 @@ int lo_server_should_coerce_args(lo_server s)
 
 void lo_server_free(lo_server s)
 {
+    //printf("[LIBLO] lo_server_free called\n");
     if (s) {
         lo_method it;
         lo_method next;
@@ -1158,6 +1159,7 @@ int lo_server_recv_raw_stream_socket(lo_server s, int isock,
 
     if (bytes_recv <= 0)
     {
+        //printf("[LIBLO] bytes_recv <= 0\n");
         if (errno == EAGAIN)
             return 0;
 
@@ -1541,6 +1543,7 @@ int lo_servers_wait(lo_server *s, int *status, int num_servers, int timeout)
         // This error may mean that liblo has not detected that a TCP communication has been closed.
         // So, close all client sockets openned, and continue.
         if (WSAGetLastError() == 10038) {
+            //printf("[LIBLO] Inside (WSAGetLastError() == 10038) condition\n");
             char err;
             int len = sizeof(err);
             for (j = 0; j < num_servers; j++) {
@@ -1723,6 +1726,7 @@ int lo_server_recv(lo_server s)
         stimeout.tv_usec = (long)((sched_time - stimeout.tv_sec) * 1.e6);
         res = select(nfds + 1, &ps, NULL, NULL, &stimeout);
         if (res == SOCKET_ERROR) {
+            //printf ("[LIBLO] lo_server_recv on select() returned SOCKET_ERROR: %d\n", WSAGetLastError());
             return 0;
         }
 
@@ -1821,6 +1825,7 @@ int lo_server_add_socket(lo_server s, int socket, lo_address a,
 void lo_server_del_socket(lo_server s, int index, int socket)
 {
     int i;
+    //printf("[LIBLO] Deleting socket %d (index %d)\n", socket, index);
 
     if (index < 0 && socket != -1) {
         for (index = 0; index < s->sockets_len; index++)
