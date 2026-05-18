@@ -42,6 +42,7 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 #include <netinet/tcp.h>
+#include <fcntl.h>
 #endif
 
 #include "lo_types_internal.h"
@@ -337,7 +338,11 @@ static int create_socket(lo_address a)
             u_long mode = 1;
             fd_set fdset; FD_ZERO(&fdset); FD_SET(sfd, &fdset);
             struct timeval tv = {1, 0}; /* 10 second timeout */
-            ioctlsocket(sfd, FIONBIO, &mode); // Enable NONBLOCK. // TODO: For Linux systems? -> fcntl(sfd, F_SETFL, O_NONBLOCK);
+#if defined(WIN32)
+            ioctlsocket(sfd, FIONBIO, &mode); // Enable NONBLOCK.
+#else
+            fcntl(sfd, F_SETFL, O_NONBLOCK);
+#endif
             connect(sfd, ai->ai_addr, (int)ai->ai_addrlen);
             if (select(sfd + 1, NULL, &fdset, NULL, &tv) == 1) {
                 //printf("[LIBLO] Connected to %s:%s\n", a->host, a->port);
