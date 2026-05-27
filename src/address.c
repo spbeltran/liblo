@@ -299,6 +299,7 @@ void lo_address_free(lo_address a)
 #endif
             closesocket(a->socket);
         }
+        //printf("[LIBLO] Freeing address %s:%s\n", a->host ? a->host : "(null)", a->port ? a->port : "(null)");
         lo_address_free_mem(a);
         free(a);
     }
@@ -306,6 +307,7 @@ void lo_address_free(lo_address a)
 
 void lo_address_free_mem(lo_address a)
 {
+    //printf("[LIBLO] lo_address_free_mem %s:%s\n", a->host ? a->host : "(null)", a->port ? a->port : "(null)");
     if (a) {
         if (a->host)
             free(a->host);
@@ -556,6 +558,10 @@ void lo_address_init_with_sockaddr(lo_address a,
                                    void *sa, size_t sa_len,
                                    int sock, int prot)
 {
+    /*if (a)
+        printf("[LIBLO] lo_address_init_with_sockaddr %s:%s\n", a->host ? a->host : "(null)", a->port ? a->port : "(null)");
+    else
+        printf("[LIBLO] lo_address_init_with_sockaddr\n");*/
     int err = 0;
     assert(a != NULL);
     lo_address_free_mem(a);

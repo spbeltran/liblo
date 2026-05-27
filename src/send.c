@@ -42,6 +42,7 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 #include <netinet/tcp.h>
+#include <fcntl.h>
 #endif
 
 #include "lo_types_internal.h"
@@ -323,11 +324,35 @@ static int create_socket(lo_address a)
         struct addrinfo *ai = a->ai;
         int sfd = -1;
         for(ai=a->ai; ai != NULL; ai = ai->ai_next) {
+            struct in_addr in_addr;
+            //printf("[LIBLO] Attempting to connect to %s:%s\n", a->host, a->port);
+            if (inet_pton(AF_INET, a->host, &in_addr) != 1 && strcmp(a->host, "localhost") != 0) {
+                //printf("[LIBLO] Invalid host!\n");
+                ai = NULL;
+                break;
+            }
             sfd = (int)socket(ai->ai_family, ai->ai_socktype, 0);
             if (-1 == sfd)
                 continue;
-            if(-1 != connect(sfd, ai->ai_addr, (int)ai->ai_addrlen))
-                break;
+            // Use select to wait for connection with defined timeout
+            u_long mode = 1;
+            fd_set fdset; FD_ZERO(&fdset); FD_SET(sfd, &fdset);
+            struct timeval tv = {1, 0}; /* 10 second timeout */
+#if defined(WIN32)
+            ioctlsocket(sfd, FIONBIO, &mode); // Enable NONBLOCK.
+#else
+            fcntl(sfd, F_SETFL, O_NONBLOCK);
+#endif
+            connect(sfd, ai->ai_addr, (int)ai->ai_addrlen);
+            if (select(sfd + 1, NULL, &fdset, NULL, &tv) == 1) {
+                //printf("[LIBLO] Connected to %s:%s\n", a->host, a->port);
+                int so_error;
+                socklen_t len = sizeof so_error;
+                getsockopt(sfd, SOL_SOCKET, SO_ERROR, &so_error, &len);
+                if (so_error == 0)
+                    break; // connected
+            }
+            //printf("[LIBLO] Connection to %s:%s failed\n", a->host, a->port);
             closesocket(sfd);
         }
         if(NULL == ai) {
@@ -572,8 +597,12 @@ int lo_send_message_from(lo_address a, lo_server from, const char *path,
     // For TCP, retry once if it failed.  The first try will return
     // error if the connection was closed, so the second try will
     // attempt to re-open the connection.
-    if (ret == -1 && a->protocol == LO_TCP)
+    if (ret == -1 && a->protocol == LO_TCP) {
         ret = send_data(a, from, data, data_len);
+        // If second time fails, free the address
+        if (ret == -1)
+            lo_address_free_mem(a);
+    }
 
     // Free the memory allocated by lo_message_serialise
     if (data)
