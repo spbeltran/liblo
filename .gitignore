@@ -11,6 +11,7 @@
 /autom4te.cache/
 /build/Makefile
 /build/Makefile.in
+/cmake/build/
 /cmake/Makefile
 /cmake/Makefile.in
 /compile
@@ -50,6 +51,7 @@
 /src/Makefile
 /src/Makefile.in
 /src/cpp_test
+/src/cpp_test_exceptions
 /src/liblo.def
 /src/subtest
 /src/test_bidirectional_tcp
