@@ -151,3 +151,4 @@ EXPORTS
     lo_message_decref                      @149
     lo_bundle_clear                        @150
     lo_bundle_set_timestamp                @151
+    lo_address_get_socket                  @152

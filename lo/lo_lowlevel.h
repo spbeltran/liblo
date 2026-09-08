@@ -431,6 +431,13 @@ lo_message lo_message_deserialise(void *data, size_t size, int *result);
 int lo_server_dispatch_data(lo_server s, void *data, size_t size);
 
 /**
+ * \brief  Return the socket of a lo_address object
+ *
+ * Returned value will be the socket file descriptor, or -1 if not available.
+ */
+int lo_address_get_socket(lo_address a);
+
+/**
  * \brief  Return the hostname of a lo_address object
  *
  * Returned value must not be modified or free'd. Value will be a dotted quad,

@@ -202,6 +202,15 @@ static void lo_address_resolve_source(lo_address a)
     }
 }
 
+int lo_address_get_socket(lo_address a)
+{
+    if (!a) {
+        return -1;
+    }
+
+    return a->socket;
+}
+
 const char *lo_address_get_hostname(lo_address a)
 {
     if (!a) {
